@@ -1,4 +1,6 @@
 import requests
+import json
+from tornado import httpclient, ioloop
 
 from util.selectors import get_agony
 from util.multimerge import simple_merge
@@ -11,6 +13,7 @@ class ProviderAPI(object):
         self.host = host.strip(r'/')
         self.url_template = self.host + '/scrapers/{}'
         self.providers = providers
+        self.results = []
 
     def query_provider(self, provider):
         try:
@@ -40,6 +43,30 @@ class ProviderAPI(object):
                 continue
 
         return simple_merge(get_agony, *results)
+
+    def async_query(self):
+        client = httpclient.AsyncHTTPClient()
+        for provider in self.providers:
+            url = self.url_template.format(provider)
+            client.fetch(url, self._push_response, method='GET')
+
+        ioloop.IOLoop.instance().start()
+        return simple_merge(get_agony, *self.results)
+
+    def _push_response(self, response):
+        try:
+            data = json.loads(response.body)
+            result = data['results']
+        except ValueError:
+            # Couldn't parse JSON
+            result = []
+        except KeyError:
+            # Results key missing
+            result = []
+
+        self.results.append(result)
+        if len(self.results) == len(self.providers):
+            ioloop.IOLoop.instance().stop()
 
 if __name__ == '__main__':
     url = 'http://localhost:9000'
