@@ -15,7 +15,7 @@ def search():
                  'United']
     api = ProviderAPI(url, providers)
 
-    return jsonify(results=list(api.async_query()))
+    return jsonify(results=list(api.query()))
 
 if __name__ == '__main__':
     app.run(port=8000)
