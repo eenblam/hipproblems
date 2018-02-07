@@ -1,4 +1,3 @@
-import requests
 import json
 from tornado import httpclient, ioloop
 
@@ -14,13 +13,14 @@ class ProviderAPI(object):
         self.results = []
 
     def query_provider(self, provider):
+        client = httpclient.HTTPClient()
         try:
-            r = requests.get(self.url_template.format(provider))
-        except requests.exceptions.ConnectionError:
+            response = client.fetch(self.url_template.format(provider))
+        except tornado.httpclient.HTTPError:
             raise ProviderError('Provider {} unavailable'.format(provider))
 
         try:
-            data = r.json()
+            data = json.loads(response.body)
         except ValueError:
             raise ProviderError('Could not parse response JSON from {}'.format(provider))
 
