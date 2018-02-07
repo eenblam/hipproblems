@@ -2,11 +2,9 @@ import requests
 import json
 from tornado import httpclient, ioloop
 
+from util.error import ProviderError
 from util.selectors import get_agony
 from util.multimerge import simple_merge
-
-class ProviderError(Exception):
-    """Raise when unable to obtain useful data from provider"""
 
 class ProviderAPI(object):
     def __init__(self, host, providers):
